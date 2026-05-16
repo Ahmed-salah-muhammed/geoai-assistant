@@ -30,95 +30,95 @@ st.set_page_config(
 st.markdown(
     """
 <style>
+  /* Light tokens (default) */
   :root {
     --mui-primary:        #1976d2;
     --mui-primary-dark:   #1565c0;
     --mui-primary-light:  #42a5f5;
+    --mui-primary-bg:     #e3f2fd;
     --mui-secondary:      #6366f1;
+    --mui-success:        #2e7d32;
+    --mui-success-bg:     #e8f5e9;
+    --mui-warning:        #ed6c02;
+    --mui-warning-bg:     #fff3e0;
+    --mui-error:          #d32f2f;
+    --mui-error-bg:       #ffebee;
+    --mui-info:           #0288d1;
+    --mui-info-bg:        #e1f5fe;
+
     --mui-text-primary:   rgba(0,0,0,.87);
     --mui-text-secondary: rgba(0,0,0,.60);
+    --mui-text-disabled:  rgba(0,0,0,.38);
     --mui-divider:        rgba(0,0,0,.12);
+    --mui-surface:        #ffffff;
+    --mui-surface-2:      #f5f5f5;
+    --mui-background:     #fafafa;
+
     --mui-elev-1: 0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.07);
     --mui-elev-2: 0 3px 6px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
     --mui-elev-4: 0 6px 16px rgba(0,0,0,.12), 0 2px 4px rgba(0,0,0,.08);
+    --mui-elev-8: 0 16px 32px rgba(0,0,0,.10), 0 4px 8px rgba(0,0,0,.10);
   }
+
+  /* Dark tokens — kick in on OS preference OR explicit Streamlit dark theme */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --mui-primary:        #90caf9;
+      --mui-primary-dark:   #64b5f6;
+      --mui-primary-light:  #bbdefb;
+      --mui-primary-bg:     rgba(144,202,249,.15);
+      --mui-secondary:      #b39ddb;
+      --mui-success:        #81c784;
+      --mui-success-bg:     rgba(129,199,132,.18);
+      --mui-warning:        #ffb74d;
+      --mui-warning-bg:     rgba(255,183,77,.18);
+      --mui-error:          #ef5350;
+      --mui-error-bg:       rgba(239,83,80,.18);
+      --mui-info:           #64b5f6;
+      --mui-info-bg:        rgba(100,181,246,.18);
+
+      --mui-text-primary:   rgba(255,255,255,.92);
+      --mui-text-secondary: rgba(255,255,255,.70);
+      --mui-text-disabled:  rgba(255,255,255,.45);
+      --mui-divider:        rgba(255,255,255,.14);
+      --mui-surface:        #1e1e1e;
+      --mui-surface-2:      #2a2a2a;
+      --mui-background:     #121212;
+
+      --mui-elev-1: 0 1px 3px rgba(0,0,0,.55), 0 1px 2px rgba(0,0,0,.45);
+      --mui-elev-2: 0 3px 6px rgba(0,0,0,.55), 0 1px 2px rgba(0,0,0,.45);
+      --mui-elev-4: 0 6px 16px rgba(0,0,0,.60), 0 2px 4px rgba(0,0,0,.45);
+      --mui-elev-8: 0 16px 32px rgba(0,0,0,.65), 0 4px 8px rgba(0,0,0,.50);
+    }
+  }
+
+  /* Streamlit also flips this attribute when its theme is dark — belt-and-braces */
+  [data-theme="dark"], [data-baseweb="dark-theme"] {
+    --mui-primary:        #90caf9;
+    --mui-primary-dark:   #64b5f6;
+    --mui-primary-light:  #bbdefb;
+    --mui-primary-bg:     rgba(144,202,249,.15);
+    --mui-secondary:      #b39ddb;
+    --mui-success:        #81c784;
+    --mui-success-bg:     rgba(129,199,132,.18);
+    --mui-warning:        #ffb74d;
+    --mui-warning-bg:     rgba(255,183,77,.18);
+    --mui-error:          #ef5350;
+    --mui-error-bg:       rgba(239,83,80,.18);
+    --mui-info:           #64b5f6;
+    --mui-info-bg:        rgba(100,181,246,.18);
+    --mui-text-primary:   rgba(255,255,255,.92);
+    --mui-text-secondary: rgba(255,255,255,.70);
+    --mui-text-disabled:  rgba(255,255,255,.45);
+    --mui-divider:        rgba(255,255,255,.14);
+    --mui-surface:        #1e1e1e;
+    --mui-surface-2:      #2a2a2a;
+    --mui-background:     #121212;
+  }
+
   html, body, .stApp, [class*="stMarkdown"] {
     font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: var(--mui-text-primary);
-  }
-
-  /* AppBar */
-  .sdk-appbar {
-    background: linear-gradient(135deg, var(--mui-primary) 0%, var(--mui-secondary) 100%);
-    color: white;
-    padding: 1.4rem 1.6rem 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 1.4rem;
-    box-shadow: var(--mui-elev-2);
-  }
-  .sdk-appbar .title {
-    margin: 0; color: white;
-    font-size: 1.85rem; font-weight: 500; letter-spacing: -.015em;
-  }
-  .sdk-appbar .version {
-    display: inline-block; padding: 3px 10px; border-radius: 12px;
-    background: rgba(255,255,255,.22); font-size: .75rem;
-    margin-left: .6rem; vertical-align: middle; font-weight: 500;
-  }
-  .sdk-appbar .subtitle {
-    color: rgba(255,255,255,.92);
-    margin: .55rem 0 0; font-size: 1rem; font-weight: 400;
-    max-width: 720px;
-  }
-
-  /* Method card - one per public SDK method */
-  .method-card {
-    background: #ffffff;
-    border-left: 4px solid var(--mui-primary);
-    padding: 12px 18px;
-    margin: 10px 0;
-    border-radius: 4px;
-    box-shadow: var(--mui-elev-1);
-  }
-  .method-card code {
-    background: rgba(25, 118, 210, .08);
-    color: var(--mui-primary-dark);
-    padding: 2px 6px; border-radius: 3px;
-    font-family: 'JetBrains Mono', 'Consolas', monospace;
-    font-size: .88em;
-  }
-  .method-card b { color: var(--mui-primary-dark); }
-
-  /* Overline */
-  .overline {
-    font-size: .72rem; font-weight: 600;
-    letter-spacing: .12em; text-transform: uppercase;
-    color: var(--mui-text-secondary);
-    margin: 1.4rem 0 .55rem 0;
-  }
-
-  /* Tab look */
-  .stTabs [data-baseweb="tab-list"] {
-    gap: 2px;
-    border-bottom: 1px solid var(--mui-divider);
-  }
-  .stTabs [data-baseweb="tab"] {
-    height: 48px; padding: 0 16px;
-    font-weight: 500; letter-spacing: .03em;
-    text-transform: none;
-  }
-  .stTabs [aria-selected="true"] {
-    color: var(--mui-primary) !important;
-    border-bottom: 2px solid var(--mui-primary) !important;
-  }
-
-  /* Metric polish */
-  [data-testid="stMetricLabel"] {
-    font-size: .72rem !important;
-    color: var(--mui-text-secondary) !important;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    font-weight: 500;
   }
 </style>
 """,

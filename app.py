@@ -5,8 +5,13 @@ mode definitions) lives in the `salah_sdk` package. This file is the
 Streamlit UI on top.
 
 Design language: Material UI-inspired - solid AppBar, Material color
-palette, elevation system, chips and cards, Material icons via
-Streamlit's `:material/X:` syntax. No emojis.
+palette with full dark-mode support via CSS variables, elevation
+system, chips and cards, Material icons via Streamlit's `:material/X:`
+syntax. No emojis.
+
+Layout: mode picker + provider + model live in a top nav bar on the
+main page (not the sidebar). Sidebar holds API keys, temperature,
+system prompt, debug, and session controls.
 """
 from __future__ import annotations
 
@@ -46,18 +51,18 @@ st.set_page_config(
 )
 
 # ──────────────────────────────────────────────────────────────────────────
-# MATERIAL UI-INSPIRED DESIGN SYSTEM (CSS)
+# MATERIAL UI-INSPIRED DESIGN SYSTEM (with dark-mode tokens)
 # ──────────────────────────────────────────────────────────────────────────
 st.markdown(
     """
 <style>
-  /* MUI design tokens */
+  /* Light tokens (default) */
   :root {
     --mui-primary:        #1976d2;
     --mui-primary-dark:   #1565c0;
     --mui-primary-light:  #42a5f5;
     --mui-primary-bg:     #e3f2fd;
-    --mui-secondary:      #9c27b0;
+    --mui-secondary:      #6366f1;
     --mui-success:        #2e7d32;
     --mui-success-bg:     #e8f5e9;
     --mui-warning:        #ed6c02;
@@ -66,31 +71,90 @@ st.markdown(
     --mui-error-bg:       #ffebee;
     --mui-info:           #0288d1;
     --mui-info-bg:        #e1f5fe;
+
     --mui-text-primary:   rgba(0,0,0,.87);
     --mui-text-secondary: rgba(0,0,0,.60);
     --mui-text-disabled:  rgba(0,0,0,.38);
     --mui-divider:        rgba(0,0,0,.12);
     --mui-surface:        #ffffff;
+    --mui-surface-2:      #f5f5f5;
     --mui-background:     #fafafa;
+
     --mui-elev-1: 0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.07);
     --mui-elev-2: 0 3px 6px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
     --mui-elev-4: 0 6px 16px rgba(0,0,0,.12), 0 2px 4px rgba(0,0,0,.08);
     --mui-elev-8: 0 16px 32px rgba(0,0,0,.10), 0 4px 8px rgba(0,0,0,.10);
   }
 
-  /* Typography baseline */
+  /* Dark tokens — kick in on OS preference OR explicit Streamlit dark theme */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --mui-primary:        #90caf9;
+      --mui-primary-dark:   #64b5f6;
+      --mui-primary-light:  #bbdefb;
+      --mui-primary-bg:     rgba(144,202,249,.15);
+      --mui-secondary:      #b39ddb;
+      --mui-success:        #81c784;
+      --mui-success-bg:     rgba(129,199,132,.18);
+      --mui-warning:        #ffb74d;
+      --mui-warning-bg:     rgba(255,183,77,.18);
+      --mui-error:          #ef5350;
+      --mui-error-bg:       rgba(239,83,80,.18);
+      --mui-info:           #64b5f6;
+      --mui-info-bg:        rgba(100,181,246,.18);
+
+      --mui-text-primary:   rgba(255,255,255,.92);
+      --mui-text-secondary: rgba(255,255,255,.70);
+      --mui-text-disabled:  rgba(255,255,255,.45);
+      --mui-divider:        rgba(255,255,255,.14);
+      --mui-surface:        #1e1e1e;
+      --mui-surface-2:      #2a2a2a;
+      --mui-background:     #121212;
+
+      --mui-elev-1: 0 1px 3px rgba(0,0,0,.55), 0 1px 2px rgba(0,0,0,.45);
+      --mui-elev-2: 0 3px 6px rgba(0,0,0,.55), 0 1px 2px rgba(0,0,0,.45);
+      --mui-elev-4: 0 6px 16px rgba(0,0,0,.60), 0 2px 4px rgba(0,0,0,.45);
+      --mui-elev-8: 0 16px 32px rgba(0,0,0,.65), 0 4px 8px rgba(0,0,0,.50);
+    }
+  }
+
+  /* Streamlit also flips this attribute when its theme is dark — belt-and-braces */
+  [data-theme="dark"], [data-baseweb="dark-theme"] {
+    --mui-primary:        #90caf9;
+    --mui-primary-dark:   #64b5f6;
+    --mui-primary-light:  #bbdefb;
+    --mui-primary-bg:     rgba(144,202,249,.15);
+    --mui-secondary:      #b39ddb;
+    --mui-success:        #81c784;
+    --mui-success-bg:     rgba(129,199,132,.18);
+    --mui-warning:        #ffb74d;
+    --mui-warning-bg:     rgba(255,183,77,.18);
+    --mui-error:          #ef5350;
+    --mui-error-bg:       rgba(239,83,80,.18);
+    --mui-info:           #64b5f6;
+    --mui-info-bg:        rgba(100,181,246,.18);
+    --mui-text-primary:   rgba(255,255,255,.92);
+    --mui-text-secondary: rgba(255,255,255,.70);
+    --mui-text-disabled:  rgba(255,255,255,.45);
+    --mui-divider:        rgba(255,255,255,.14);
+    --mui-surface:        #1e1e1e;
+    --mui-surface-2:      #2a2a2a;
+    --mui-background:     #121212;
+  }
+
+  /* Typography */
   html, body, .stApp, [class*="stMarkdown"] {
     font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: var(--mui-text-primary);
   }
 
-  /* AppBar (replaces the gradient hero) */
+  /* AppBar */
   .mui-appbar {
-    background: var(--mui-primary);
+    background: linear-gradient(135deg, var(--mui-primary) 0%, var(--mui-secondary) 100%);
     color: white;
     padding: 1.1rem 1.5rem 1.2rem;
     border-radius: 8px;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.1rem;
     box-shadow: var(--mui-elev-2);
   }
   .mui-appbar .title {
@@ -98,35 +162,66 @@ st.markdown(
     letter-spacing: .015em; color: white;
   }
   .mui-appbar .subtitle {
-    color: rgba(255,255,255,.85);
-    font-size: .92rem;
-    margin-top: .25rem; font-weight: 400;
+    color: rgba(255,255,255,.90);
+    font-size: .92rem; margin-top: .25rem; font-weight: 400;
   }
   .mui-appbar .chip-row { margin-top: .9rem; }
 
-  /* Chip (MUI Chip - rounded pill, ~26px height) */
-  .chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    height: 26px; padding: 0 10px; border-radius: 16px;
-    font-size: .76rem; font-weight: 500; letter-spacing: .02em;
-    margin-right: 6px; margin-bottom: 4px;
-    background: rgba(255,255,255,.18); color: white;
-    border: 1px solid rgba(255,255,255,.25);
-  }
-  .chip.success {
-    background: var(--mui-success-bg); color: var(--mui-success);
-    border-color: rgba(46,125,50,.3);
-  }
-  .chip.error {
-    background: var(--mui-error-bg); color: var(--mui-error);
-    border-color: rgba(211,47,47,.3);
-  }
-  .chip .dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: currentColor; flex-shrink: 0;
-  }
+   /* Chip — used inside the AppBar (light text on translucent bg) */
+   .chip {
+   display: inline-flex; align-items: center; gap: 6px;
+   height: 26px; padding: 0 10px; border-radius: 16px;
+   font-size: .76rem; font-weight: 500; letter-spacing: .02em;
+   margin-right: 6px; margin-bottom: 4px;
+   background: rgba(255,255,255,.20); color: white;
+   border: 1px solid rgba(255,255,255,.30);
+   }
+   .chip.success {
+   background: rgba(129,199,132,.30); color: #c8e6c9;
+   border-color: rgba(129,199,132,.45);
+   }
+   .chip.error {
+   background: rgba(239,83,80,.28); color: #ffcdd2;
+   border-color: rgba(239,83,80,.45);
+   }
+   .chip .dot {
+   width: 7px; height: 7px; border-radius: 50%;
+   background: currentColor; flex-shrink: 0;
+   }
 
-  /* Section title (MUI overline) */
+   /* Dark mode chip adjustments */
+   @media (prefers-color-scheme: dark) {
+   .chip {
+   background: rgba(255,255,255,.10); color: rgba(255,255,255,.90);
+   border-color: rgba(255,255,255,.20);
+   }
+   .chip.success {
+   background: rgba(129,199,132,.20); color: #a5d6a7;
+   border-color: rgba(129,199,132,.30);
+   }
+   .chip.error {
+   background: rgba(239,83,80,.18); color: #ef9a9a;
+   border-color: rgba(239,83,80,.25);
+   }
+   }
+
+   [data-theme="dark"] .chip,
+   [data-baseweb="dark-theme"] .chip {
+   background: rgba(255,255,255,.10); color: rgba(255,255,255,.90);
+   border-color: rgba(255,255,255,.20);
+   }
+   [data-theme="dark"] .chip.success,
+   [data-baseweb="dark-theme"] .chip.success {
+   background: rgba(129,199,132,.20); color: #a5d6a7;
+   border-color: rgba(129,199,132,.30);
+   }
+   [data-theme="dark"] .chip.error,
+   [data-baseweb="dark-theme"] .chip.error {
+   background: rgba(239,83,80,.18); color: #ef9a9a;
+   border-color: rgba(239,83,80,.25);
+   }
+
+  /* Overline */
   .overline {
     font-size: .72rem; font-weight: 600;
     letter-spacing: .12em; text-transform: uppercase;
@@ -134,7 +229,22 @@ st.markdown(
     margin: 1.4rem 0 .55rem 0;
   }
 
-  /* Card (MUI Paper, elevation 1) */
+  /* Toolbar (sub-AppBar — provider/model row) */
+  .mui-toolbar {
+    background: var(--mui-surface);
+    border: 1px solid var(--mui-divider);
+    border-radius: 8px;
+    padding: .55rem .9rem;
+    margin-bottom: 1.2rem;
+    box-shadow: var(--mui-elev-1);
+  }
+  .mui-toolbar .mode-desc {
+    color: var(--mui-text-secondary);
+    font-size: .85rem;
+    margin: .3rem 0 0;
+  }
+
+  /* Card */
   .mui-card {
     background: var(--mui-surface);
     border-radius: 8px;
@@ -142,10 +252,11 @@ st.markdown(
     margin-bottom: 14px;
     box-shadow: var(--mui-elev-1);
     transition: box-shadow .2s ease;
+    color: var(--mui-text-primary);
   }
   .mui-card:hover { box-shadow: var(--mui-elev-4); }
 
-  /* Footer (subtle, bottom-anchored) */
+  /* Footer */
   .mui-footer {
     margin-top: 2.5rem; padding-top: 1.2rem;
     border-top: 1px solid var(--mui-divider);
@@ -158,7 +269,7 @@ st.markdown(
   }
   .mui-footer a:hover { text-decoration: underline; }
 
-  /* Polish Streamlit buttons toward MUI */
+  /* Button polish (MUI-like) */
   .stButton > button {
     border-radius: 4px !important;
     font-weight: 500 !important;
@@ -166,28 +277,33 @@ st.markdown(
     text-transform: none !important;
     transition: box-shadow .2s ease, background .2s ease;
   }
-  .stButton > button:hover:not(:disabled) {
-    box-shadow: var(--mui-elev-2);
-  }
+  .stButton > button:hover:not(:disabled) { box-shadow: var(--mui-elev-2); }
   .stButton > button[kind="primary"] {
     background: var(--mui-primary) !important;
     border-color: var(--mui-primary) !important;
+    color: white !important;
   }
   .stButton > button[kind="primary"]:hover:not(:disabled) {
     background: var(--mui-primary-dark) !important;
   }
 
-  /* Make the metric labels respect MUI typography */
+  /* Metric polish */
   [data-testid="stMetricLabel"] {
-    font-size: .75rem !important;
+    font-size: .72rem !important;
     color: var(--mui-text-secondary) !important;
     text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: .08em;
     font-weight: 500;
   }
   [data-testid="stMetricValue"] {
     font-weight: 500 !important;
     color: var(--mui-text-primary) !important;
+  }
+
+  /* Segmented control (mode nav bar) — tighter MUI look */
+  div[data-testid="stSegmentedControl"] label {
+    font-weight: 500 !important;
+    letter-spacing: .02em !important;
   }
 </style>
 """,
@@ -215,11 +331,14 @@ def get_api_key(name: str) -> str:
 # ──────────────────────────────────────────────────────────────────────────
 # SESSION STATE
 # ──────────────────────────────────────────────────────────────────────────
+DEFAULT_MODE = "Change Detection"     # per user request
+
 st.session_state.setdefault("_keys", {})
 st.session_state.setdefault("histories", {m: [] for m in MODES})
 st.session_state.setdefault("images", {})
 st.session_state.setdefault("benchmark_cache", None)
 st.session_state.setdefault("call_counts", {"gemini": 0, "groq": 0, "openrouter": 0})
+st.session_state.setdefault("mode_name", DEFAULT_MODE)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -229,7 +348,8 @@ configured = {p: bool(get_api_key(PROVIDER_KEY[p])) for p in PROVIDER_KEY}
 chip_row_html = "".join(
     [
         f'<span class="chip {"success" if configured[p] else "error"}">'
-        f'<span class="dot"></span>{p.capitalize()} {"connected" if configured[p] else "missing key"}</span>'
+        f'<span class="dot"></span>{p.capitalize()} '
+        f'{"connected" if configured[p] else "missing key"}</span>'
         for p in ("gemini", "groq", "openrouter")
     ]
 )
@@ -245,25 +365,60 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Top nav row (Material icons via Streamlit's :material/X: syntax)
-nav_a, nav_b, nav_c, _ = st.columns([1.4, 1.4, 1.4, 4])
-with nav_a:
+
+# ──────────────────────────────────────────────────────────────────────────
+# TOP NAV BAR — mode picker (segmented control)
+# ──────────────────────────────────────────────────────────────────────────
+mode_options = list(MODES.keys())
+
+# Honor "jump to mode" if Quick Benchmark button was used previously
+if (jt := st.session_state.pop("_jump_to_mode", None)) in MODES:
+    st.session_state["mode_name"] = jt
+
+mode_name = st.segmented_control(
+    label="Mode",
+    options=mode_options,
+    default=st.session_state["mode_name"],
+    key="mode_picker",
+    label_visibility="collapsed",
+    selection_mode="single",
+)
+# segmented_control returns None if nothing selected — fall back to last known
+mode_name = mode_name or st.session_state["mode_name"]
+st.session_state["mode_name"] = mode_name
+mode = MODES[mode_name]
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# SUB-TOOLBAR — provider + model + action buttons
+# ──────────────────────────────────────────────────────────────────────────
+candidate_models = [
+    mid
+    for mid, meta in MODELS.items()
+    if (meta["vision"] if mode["vision"] else True)
+]
+available_providers = sorted({MODELS[m]["provider"] for m in candidate_models})
+
+tb_a, tb_b, tb_c, tb_d, tb_e = st.columns([1.5, 2.2, 1.4, 1.4, 0.8])
+with tb_a:
+    provider = st.selectbox(
+        "Provider", available_providers, format_func=lambda p: p.capitalize(),
+        label_visibility="collapsed",
+    )
+provider_models = [m for m in candidate_models if MODELS[m]["provider"] == provider]
+with tb_b:
+    model_id = st.selectbox(
+        "Model", provider_models, format_func=lambda m: MODELS[m]["label"],
+        label_visibility="collapsed",
+    )
+with tb_c:
     st.page_link(
         "pages/1_Salah_SDK.py",
         label="SDK Docs",
         icon=":material/article:",
-        help="API reference and code examples for the underlying SDK",
+        help="API reference and code examples",
     )
-with nav_b:
-    if st.button(
-        "Quick benchmark",
-        icon=":material/speed:",
-        use_container_width=True,
-        help="Jump to benchmark mode",
-    ):
-        st.session_state["_jump_to_mode"] = "Benchmark"
-        st.rerun()
-with nav_c:
+with tb_d:
     if st.button(
         "Reset session",
         icon=":material/refresh:",
@@ -271,7 +426,20 @@ with nav_c:
     ):
         for k in ("histories", "images", "benchmark_cache", "call_counts", "_keys"):
             st.session_state.pop(k, None)
+        st.session_state["mode_name"] = DEFAULT_MODE
         st.rerun()
+with tb_e:
+    if mode["vision"]:
+        hidden = sum(1 for m in MODELS if not MODELS[m]["vision"])
+        st.caption(f":material/visibility: {hidden} text-only hidden")
+    else:
+        st.caption(":material/auto_awesome: All models")
+
+# Mode description under the toolbar
+st.markdown(
+    f'<div class="mui-toolbar"><div class="mode-desc">{MODE_DESCRIPTIONS[mode_name]}</div></div>',
+    unsafe_allow_html=True,
+)
 
 if not any(configured.values()):
     st.info(
@@ -282,12 +450,16 @@ if not any(configured.values()):
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# SIDEBAR
+# SIDEBAR  (keys + advanced settings only — mode/provider/model now live up top)
 # ──────────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown('<p class="overline">Settings</p>', unsafe_allow_html=True)
 
-    with st.expander("API Keys", expanded=not any(configured.values()), icon=":material/key:"):
+    with st.expander(
+        "API Keys",
+        expanded=not any(configured.values()),
+        icon=":material/key:",
+    ):
         for key_name in KEY_NAMES:
             current = get_api_key(key_name)
             val = st.text_input(
@@ -298,38 +470,12 @@ with st.sidebar:
             )
             st.session_state["_keys"][key_name] = val
 
-    default_mode_idx = 0
-    if (jt := st.session_state.pop("_jump_to_mode", None)) in MODES:
-        default_mode_idx = list(MODES.keys()).index(jt)
-    mode_name = st.selectbox("Mode", list(MODES.keys()), index=default_mode_idx)
-    mode = MODES[mode_name]
-    st.caption(MODE_DESCRIPTIONS[mode_name])
-
-    candidate_models = [
-        mid
-        for mid, meta in MODELS.items()
-        if (meta["vision"] if mode["vision"] else True)
-    ]
-    if mode["vision"]:
-        hidden = [m for m in MODELS if not MODELS[m]["vision"]]
-        if hidden:
-            st.caption(f"_{len(hidden)} text-only models hidden — vision mode_")
-
-    available_providers = sorted({MODELS[m]["provider"] for m in candidate_models})
-    provider = st.selectbox(
-        "Provider", available_providers, format_func=lambda p: p.capitalize()
-    )
-    provider_models = [m for m in candidate_models if MODELS[m]["provider"] == provider]
-    model_id = st.selectbox(
-        "Model", provider_models, format_func=lambda m: MODELS[m]["label"]
-    )
-
     temperature = st.slider("Temperature", 0.0, 2.0, 0.3, 0.1)
 
     system_prompt = st.text_area(
         "System Prompt",
         value=mode["system"],
-        height=200,
+        height=220,
         help="Pre-filled from the mode preset. Edit freely — this is the heart of the assistant.",
     )
 
@@ -371,17 +517,17 @@ if not get_api_key(required_key):
 # ──────────────────────────────────────────────────────────────────────────
 def call_model(model_id, system, history, user_msg, temperature,
                images=None, stream=True, json_mode=False):
-    provider = MODELS[model_id]["provider"]
-    st.session_state["call_counts"][provider] += 1
-    if provider == "gemini":
+    prov = MODELS[model_id]["provider"]
+    st.session_state["call_counts"][prov] += 1
+    if prov == "gemini":
         return call_gemini(
             get_api_key("GOOGLE_API_KEY"),
             model_id, system, history, user_msg, temperature,
             images, stream, json_mode,
         )
     return call_openai_compat(
-        provider,
-        get_api_key(PROVIDER_KEY[provider]),
+        prov,
+        get_api_key(PROVIDER_KEY[prov]),
         model_id, system, history, user_msg, temperature,
         images, stream, json_mode,
     )
@@ -585,8 +731,10 @@ elif kind == "image_chat":
         if mode_name in st.session_state["images"]:
             st.image(st.session_state["images"][mode_name], use_container_width=True)
         else:
-            st.info("Upload an image, or pick a public sample below.",
-                    icon=":material/upload:")
+            st.info(
+                "Upload an image, or pick a public sample below.",
+                icon=":material/upload:",
+            )
         sample_image_gallery(mode_name)
 
     with col_chat:
